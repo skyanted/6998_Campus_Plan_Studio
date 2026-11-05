@@ -10,7 +10,7 @@ export async function POST(request:Request){
  try{
  if(Number(request.headers.get('content-length'))>3200000)throw Error('Image is too large.');
  const {action,p={}}=await request.json();
- if(!['list','save','delete','runs','run','start','advance'].includes(action))throw Error('Invalid action.');
+ if(!['list','save','delete','runs','run','start','advance','library-save'].includes(action))throw Error('Invalid action.');
  if(action==='list'){const catalog=await rpc('list',{});const {data:globalModel}=await db.rpc('week7_generation_model',{p_proof:null});return Response.json({...catalog,globalModel:globalModel?.model??null});}
  if(action==='start'){
  const image=p.input?.image;if(image&&!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(image))throw Error('Choose a JPEG, PNG or WebP image.');
