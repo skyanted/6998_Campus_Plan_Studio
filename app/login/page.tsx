@@ -1,0 +1,4 @@
+'use client';
+import {useState} from 'react';
+import {createBrowserClient} from '@supabase/ssr';
+export default function Login(){const [pending,setPending]=useState(false),[error,setError]=useState('');return <main className="login"><div className="brand">c.<span>Campus plans.</span><b>Studio</b></div><section><h1>Sign in</h1><p>Administrators only</p><button className="primary" disabled={pending} onClick={async()=>{setPending(true);try{const client=createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,{cookieOptions:{name:'campus-studio-auth'}});const {error}=await client.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+'/auth/callback'}});if(error)throw error;}catch{setError('Unable to sign in. Try again.');setPending(false);}}}>{pending?<i className="spinner"/>:'G'} Sign in with Google</button>{error&&<p role="alert">{error}</p>}</section></main>}
