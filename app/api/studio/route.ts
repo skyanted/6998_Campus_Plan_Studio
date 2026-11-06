@@ -6,17 +6,16 @@ export async function POST(request:Request){
  if(request.headers.get('origin')!==new URL(request.url).origin)return Response.json({error:'Invalid origin.'},{status:403});
  const db=await authClient();const {data:{user}}=await db.auth.getUser();if(!user)return Response.json({error:'Sign in required.'},{status:401});
  const {data:admin}=await db.rpc('week6_admin_me');if(!admin?.authorized)return Response.json({error:'Admin access required.'},{status:403});
- async function rpc(action:string,p:unknown){const {data,error}=await db.rpc('studio_command',{action,p});if(error)throw Error(error.message);return data;}
+ async function rpc(action:string,p:unknown){const {data,error}=await db.rpc('studio_lab_command',{action,p});if(error)throw Error(error.message);return data;}
  try{
  if(Number(request.headers.get('content-length'))>3200000)throw Error('Image is too large.');
  const {action,p={}}=await request.json();
- if(!['list','save','delete','runs','run','start','advance','library-save'].includes(action))throw Error('Invalid action.');
- if(action==='list'){const catalog=await rpc('list',{});const {data:globalModel}=await db.rpc('week7_generation_model',{p_proof:null});return Response.json({...catalog,globalModel:globalModel?.model??null});}
+ if(!['list','save','delete','runs','run','start','advance','library-save','import'].includes(action))throw Error('Invalid action.');
+ if(action==='import'){const {data,error}=await db.rpc('studio_import_to_admin',{p_chain:p.id,p_revision:p.revision});if(error)throw Error(error.message);return Response.json(data);}
+ if(action==='list')return Response.json(await rpc('list',{}));
  if(action==='start'){
  const image=p.input?.image;if(image&&!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(image))throw Error('Choose a JPEG, PNG or WebP image.');
- const {data:config,error}=await db.rpc('week7_generation_model',{p_proof:null});if(error)throw Error(error.message);
- const catalog=await rpc('list',{});const model=catalog.models.find((m:{identifier:string})=>m.identifier===config.model);if(!model)throw Error('Choose an enabled global model in Admin.');
- return Response.json(await rpc('start',{...p,default_model_id:model.id}));
+ return Response.json(await rpc('start',p));
  }
  if(action!=='advance')return Response.json(await rpc(action,p));
  const run:Run=await rpc('claim',p);if(run.status!=='running')return Response.json(run);
